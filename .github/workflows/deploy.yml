@@ -20,7 +20,7 @@ jobs:
 
       - name: Verify Model File
         run: |
-          if [ -f "model.pkl" ]; then
+          if [ -f "/app/model.pkl" ]; then
             echo "Model file exists."
           else
             echo "Error: model.pkl not found!"
