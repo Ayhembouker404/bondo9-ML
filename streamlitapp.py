@@ -78,3 +78,11 @@ if st.button("🔍 Run Risk Analysis", type="primary"):
                 st.error("API Error: " + response.text)
         except Exception as e:
             st.error(f"Connection Failed: {e}")
+import streamlit as st
+
+# Access the secret
+api_key = st.secrets["API_KEY"]
+
+# Use it in your request header
+headers = {"X-API-KEY": api_key}
+response = requests.post(f"{st.secrets['BACKEND_URL']}/predict", json=data, headers=headers)
