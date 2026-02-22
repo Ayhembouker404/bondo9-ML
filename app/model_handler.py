@@ -6,4 +6,5 @@ from functools import lru_cache
 def load_model():
     # This only runs once, then saves the result in memory
     print("Loading model into memory...")
-    return joblib.load("models/model.joblib")
+    return joblib.load("models/model.pkl")
+
