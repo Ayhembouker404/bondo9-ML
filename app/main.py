@@ -53,3 +53,13 @@ def predict(data: PolicyFeatures):
     # Mock response for testing
     return {"prediction": 0, "probability": 0.12, "User_ID": data.User_ID}
 
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # For production, replace "*" with your streamlit URL
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
