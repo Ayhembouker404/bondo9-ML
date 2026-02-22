@@ -1,16 +1,9 @@
+# app/model_loader.py
 import joblib
-import numpy as np
+from functools import lru_cache
 
-class ModelHandler:
-    def __init__(self, model_path="models/model.pkl"):
-        # For this demo, we'll simulate a model if the file doesn't exist
-        try:
-            self.model = joblib.load(model_path)
-        except:
-            self.model = None
-
-    def predict(self, data: list):
-        if self.model:
-            return self.model.predict([data])[0]
-        # Fallback dummy logic: sum the inputs
-        return sum(data)
+@lru_cache(maxsize=1)
+def load_model():
+    # This only runs once, then saves the result in memory
+    print("Loading model into memory...")
+    return joblib.load("models/model.joblib")
