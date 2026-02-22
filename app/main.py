@@ -6,7 +6,7 @@ import pandas as pd
 app = FastAPI()
 
 # Load your model (ensure it's trained on these 28 features)
-# model = joblib.load("models/model.joblib")
+model = joblib.load("model.pkl")
 
 class PolicyFeatures(BaseModel):
     User_ID: str
@@ -48,7 +48,8 @@ def predict(data: PolicyFeatures):
     input_df = pd.DataFrame([data.dict()])
     
     # Preprocessing logic (Encoding strings) would go here
-    # prediction = model.predict(input_df)
+    prediction = model.predict(input_df)
     
     # Mock response for testing
     return {"prediction": 0, "probability": 0.12, "User_ID": data.User_ID}
+
