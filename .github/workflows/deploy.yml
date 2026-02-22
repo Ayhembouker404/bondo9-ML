@@ -1,16 +1,13 @@
-name: CI Pipeline
+name: Sync to Hugging Face
 on: [push]
-
 jobs:
-  test:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
-      - name: Install dependencies
-        run: pip install fastapi uvicorn pytest requests
-      - name: Run simple check
-        run: python -m compileall . # Checks for syntax errors
+          fetch-depth: 0
+      - name: Push to HF
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: git push --force https://<user>:$HF_TOKEN@huggingface.co/spaces/<user>/<space-name> main
