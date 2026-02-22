@@ -66,7 +66,7 @@ if st.button("🔍 Run Risk Analysis", type="primary"):
     with st.spinner("Analyzing data..."):
         try:
             # Note: Ensure FastAPI is running on port 8000
-            response = requests.post("app/main.py", json=inputs)
+            response = requests.post("http://localhost:8000/predict", json=inputs)
             if response.status_code == 200:
                 res = response.json()
                 st.metric("Cancellation Risk", "Low" if res['prediction'] == 0 else "High")
