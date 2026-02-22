@@ -1,107 +1,80 @@
 import streamlit as st
 import requests
-import pandas as pd
-import numpy as np
 
-# Page Config
-st.set_page_config(
-    page_title="AI Classifier Pro",
-    page_icon="🤖",
-    layout="wide"
-)
+st.set_page_config(page_title="Policy Risk Analyzer", page_icon="🛡️", layout="wide")
 
-# Custom CSS for a clean look
-st.markdown("""
-    <style>
-    .main { background-color: #f8f9fa; }
-    .stButton>button { width: 100%; border-radius: 5px; height: 3em; background-color: #007bff; color: white; }
-    .prediction-box { padding: 20px; border-radius: 10px; text-align: center; font-size: 24px; font-weight: bold; }
-    </style>
-    """, unsafe_allow_html=True)
+st.title("🛡️ Policy Cancellation Risk Predictor")
+st.markdown("Enter policy details below to evaluate the cancellation probability.")
 
-# --- SIDEBAR ---
-with st.sidebar:
-    st.title("Settings")
-    st.info("Status: API Connected ✅")
-    st.divider()
-    st.markdown("### Model Info")
-    st.write("**Version:** 1.0.4-stable")
-    st.write("**Features:** 28 Input Dimensions")
-    if st.button("Reset Inputs"):
-        st.rerun()
+# Define Options from train.csv
+REGIONS = ["AUT", "PRT", "FRA", "IRL", "GBR", "ESP", "BEL", "ITA", "USA", "DEU"]
+CHANNELS = ["Aggregator_Site", "Direct_Website", "Affiliate_Group", "Corporate_Partner", "Local_Broker"]
+TIERS = ["Tier_1_High_Ded", "Tier_2_Mid_Ded", "Tier_3_Low_Ded", "Tier_4_Zero_Ded"]
+MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
-# --- MAIN CONTENT ---
-st.title("🚀 Enterprise Feature Classifier")
-st.write("Input the 28 required features below to generate a real-time classification.")
+with st.expander("ℹ️ Instructions", expanded=False):
+    st.write("Fill out all 4 tabs of information. The model uses 28 specific features to calculate risk.")
 
-# Grouping 28 features into 4 tabs (7 features each) to avoid a "wall of inputs"
-tab1, tab2, tab3, tab4 = st.tabs(["Primary Metrics", "Secondary Data", "Environmental", "Historical"])
+# Organize 28 features into 4 logical tabs
+tab1, tab2, tab3, tab4 = st.tabs(["👤 Client Profile", "📅 Policy Timing", "💼 Broker & Agent", "📜 Coverage Details"])
 
-features = []
+inputs = {}
 
 with tab1:
-    st.subheader("Core Indicators")
     col1, col2 = st.columns(2)
-    for i in range(1, 8):
-        with (col1 if i % 2 == 0 else col2):
-            val = st.number_input(f"Feature {i}", value=0.0, key=f"f{i}")
-            features.append(val)
+    inputs["User_ID"] = col1.text_input("User ID", "USR_000000")
+    inputs["Employment_Status"] = col2.selectbox("Employment Status", ["Employed_FullTime", "Self_Employed", "Contractor", "Unemployed"])
+    inputs["Estimated_Annual_Income"] = col1.number_input("Annual Income ($)", min_value=0.0, value=35000.0)
+    inputs["Adult_Dependents"] = col2.slider("Adult Dependents", 0, 10, 2)
+    inputs["Child_Dependents"] = col1.slider("Child Dependents", 0, 10, 0)
+    inputs["Infant_Dependents"] = col2.slider("Infant Dependents", 0, 5, 0)
+    inputs["Existing_Policyholder"] = col1.radio("Existing Customer?", [0, 1], format_func=lambda x: "Yes" if x==1 else "No")
 
 with tab2:
-    st.subheader("Technical Specs")
     col1, col2 = st.columns(2)
-    for i in range(8, 15):
-        with (col1 if i % 2 == 0 else col2):
-            val = st.number_input(f"Feature {i}", value=0.0, key=f"f{i}")
-            features.append(val)
+    inputs["Policy_Start_Year"] = col1.selectbox("Start Year", [2015, 2016, 2017])
+    inputs["Policy_Start_Month"] = col2.selectbox("Start Month", MONTHS)
+    inputs["Policy_Start_Week"] = col1.number_input("Start Week", 1, 53, 10)
+    inputs["Policy_Start_Day"] = col2.number_input("Start Day", 1, 31, 15)
+    inputs["Days_Since_Quote"] = col1.number_input("Days Since Quote", 0, 500, 30)
+    inputs["Underwriting_Processing_Days"] = col2.number_input("Underwriting Days", 0, 400, 0)
+    inputs["Region_Code"] = col1.selectbox("Region Code", REGIONS)
 
 with tab3:
-    st.subheader("Contextual Variables")
     col1, col2 = st.columns(2)
-    for i in range(15, 22):
-        with (col1 if i % 2 == 0 else col2):
-            val = st.number_input(f"Feature {i}", value=0.0, key=f"f{i}")
-            features.append(val)
+    inputs["Broker_ID"] = col1.number_input("Broker ID", value=250.0)
+    inputs["Employer_ID"] = col2.number_input("Employer ID (Optional)", value=0.0)
+    inputs["Broker_Agency_Type"] = col1.selectbox("Agency Type", ["Urban_Boutique", "National_Corporate"])
+    inputs["Acquisition_Channel"] = col2.selectbox("Acquisition Channel", CHANNELS)
+    inputs["Previous_Claims_Filed"] = col1.number_input("Previous Claims", 0, 50, 0)
+    inputs["Years_Without_Claims"] = col2.number_input("Years Without Claims", 0, 100, 0)
+    inputs["Previous_Policy_Duration_Months"] = col1.number_input("Prev Policy Duration (Months)", 0, 100, 0)
 
 with tab4:
-    st.subheader("Temporal Data")
     col1, col2 = st.columns(2)
-    for i in range(22, 29):
-        with (col1 if i % 2 == 0 else col2):
-            val = st.number_input(f"Feature {i}", value=0.0, key=f"f{i}")
-            features.append(val)
+    inputs["Deductible_Tier"] = col1.selectbox("Deductible Tier", TIERS)
+    inputs["Payment_Schedule"] = col2.selectbox("Payment Schedule", ["Monthly_EFT", "Annual_Upfront", "Quarterly_Invoice"])
+    inputs["Purchased_Coverage_Bundle"] = col1.slider("Coverage Bundle Level", 0, 10, 2)
+    inputs["Vehicles_on_Policy"] = col2.slider("Vehicles", 0, 10, 1)
+    inputs["Policy_Amendments_Count"] = col1.number_input("Policy Amendments", 0, 20, 0)
+    inputs["Custom_Riders_Requested"] = col2.number_input("Custom Riders", 0, 10, 0)
+    inputs["Grace_Period_Extensions"] = col1.number_input("Grace Period Extensions", 0, 20, 0)
 
 st.divider()
 
-# --- INFERENCE SECTION ---
-if st.button("Run Classification"):
-    with st.spinner("Consulting the model..."):
+if st.button("🔍 Run Risk Analysis", type="primary"):
+    with st.spinner("Analyzing data..."):
         try:
-            # Pointing to your FastAPI endpoint (running on port 8000)
-            response = requests.post(
-                "http://localhost:8000/predict", 
-                json={"data": features},
-                timeout=5
-            )
-            
+            # Note: Ensure FastAPI is running on port 8000
+            response = requests.post("http://localhost:8000/predict", json=inputs)
             if response.status_code == 200:
-                result = response.json().get("prediction")
-                
-                # Visual Result
-                st.balloons()
-                if result == 1:
-                    st.success("### Prediction: POSITIVE / CLASS A")
+                res = response.json()
+                st.metric("Cancellation Risk", "Low" if res['prediction'] == 0 else "High")
+                if res['prediction'] == 1:
+                    st.error(f"Alert: High probability of cancellation for user {res['User_ID']}")
                 else:
-                    st.warning("### Prediction: NEGATIVE / CLASS B")
-                
-                # Show the raw vector for transparency
-                with st.expander("View Input Vector"):
-                    st.json(features)
+                    st.success(f"User {res['User_ID']} is likely to retain the policy.")
             else:
-                st.error(f"Error: {response.text}")
+                st.error("API Error: " + response.text)
         except Exception as e:
-            st.error(f"Could not connect to API: {e}")
-
-# --- FOOTER ---
-st.markdown("---")
-st.caption("Internal AI Inference Tool • v2026.02")
+            st.error(f"Connection Failed: {e}")
