@@ -1,21 +1,23 @@
+# app/main.py
 from fastapi import FastAPI
 from pydantic import BaseModel
-from .model_handler import ModelHandler
+import joblib
+import numpy as np
 
-app = FastAPI(title="ML Inference API")
-handler = ModelHandler()
+app = FastAPI()
+model = joblib.load("models/model.joblib")
 
-# Data validation schema
-class InferenceInput(BaseModel):
-    features: list[float]
+class Features(BaseModel):
+    data: list[float]  # Expecting a list of 28 floats
 
-# Endpoint 1: Health Check (Requirement)
-@app.get("/")
+@app.get("/health")
 def health_check():
-    return {"status": "online", "model_loaded": handler.model is not None}
+    return {"status": "healthy", "features_required": 28}
 
-# Endpoint 2: Prediction (Requirement)
 @app.post("/predict")
-def predict(input_data: InferenceInput):
-    prediction = handler.predict(input_data.features)
-    return {"prediction": prediction}
+def predict(features: Features):
+    if len(features.data) != 28:
+        return {"error": f"Expected 28 features, got {len(features.data)}"}
+    
+    prediction = model.predict([features.data])
+    return {"prediction": int(prediction[0])}
