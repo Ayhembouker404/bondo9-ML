@@ -63,26 +63,26 @@ with tab4:
 st.divider()
 
 if st.button("🔍 Run Risk Analysis", type="primary"):
-    with st.spinner("Analyzing data..."):
-        try:
-            # Note: Ensure FastAPI is running on port 8000
-            response = requests.post("http://localhost:8000/predict", json=inputs)
-            if response.status_code == 200:
-                res = response.json()
-                st.metric("Cancellation Risk", "Low" if res['prediction'] == 0 else "High")
-                if res['prediction'] == 1:
-                    st.error(f"Alert: High probability of cancellation for user {res['User_ID']}")
+    if not api_url:
+        st.error("❌ Configuration Error: 'BACKEND_URL' not found in Streamlit Secrets.")
+    else:
+        with st.spinner("Connecting to Render API..."):
+            try:
+                # Ensure 'inputs' is the dictionary of your 28 features
+                response = requests.post(
+                    f"{api_url.rstrip('/')}/predict", 
+                    json=inputs,
+                    timeout=20 # Render "Free Tier" spins down; needs time to wake up
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    st.success(f"Analysis Complete for {result['User_ID']}")
+                    st.metric("Cancellation Prediction", result['prediction'])
                 else:
-                    st.success(f"User {res['User_ID']} is likely to retain the policy.")
-            else:
-                st.error("API Error: " + response.text)
-        except Exception as e:
-            st.error(f"Connection Failed: {e}")
-import streamlit as st
-
-# Access the secret
-api_key = st.secrets["API_KEY"]
-
-# Use it in your request header
-headers = {"X-API-KEY": api_key}
-response = requests.post(f"{st.secrets['BACKEND_URL']}/predict", json=data, headers=headers)
+                    st.error(f"API Error ({response.status_code}): {response.text}")
+                    
+            except requests.exceptions.ConnectTimeout:
+                st.error("⏳ Connection Timeout. The Render free tier might be 'waking up'. Please try again in 30 seconds.")
+            except Exception as e:
+                st.error(f"📡 Connection Failed: {e}")
